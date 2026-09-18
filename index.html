@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Futbol a la demarcació de Tarragona</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pitch:#1f3d2e;
+    --pitch-dark:#132318;
+    --paper:#f4f1e7;
+    --paper-2:#eae4d2;
+    --land:#dcd6bf;
+    --land-hover:#c9c19f;
+    --sea:#dfe7e2;
+    --gold:#c99a2e;
+    --terra:#b0502f;
+    --ink:#1c231f;
+    --muted:#6b6558;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Work Sans',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.label{font-family:'Oswald',sans-serif; letter-spacing:.01em;}
+  .wrap{max-width:640px;margin:0 auto;padding:0 0 40px;}
+
+  header.top{
+    background:var(--pitch);
+    color:var(--paper);
+    padding:20px 20px 16px;
+  }
+  header.top h1{margin:0 0 5px; font-size:1.4rem; font-weight:600; color:#fff; line-height:1.15;}
+  header.top p{margin:0; font-size:.88rem; color:#c9d6cc; max-width:48ch;}
+
+  .crumbs{
+    padding:10px 20px;
+    font-size:.8rem;
+    font-weight:600;
+    color:var(--terra);
+    background:var(--paper-2);
+    border-bottom:1px solid #ddd6c1;
+    min-height:1.2em;
+  }
+
+  .map-holder{
+    background:var(--sea);
+    position:relative;
+    touch-action:none;
+    overflow:hidden;
+    cursor:grab;
+    user-select:none;
+  }
+  .map-holder.dragging{cursor:grabbing;}
+  svg#map{display:block; width:100%; height:auto;}
+  svg#map g.mapgroup{
+    animation:mapFade .38s ease both;
+  }
+  @keyframes mapFade{
+    from{opacity:0;}
+    to{opacity:1;}
+  }
+  .loading-state{
+    position:absolute; inset:0; z-index:5;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px; background:var(--sea);
+    font-family:'Work Sans',sans-serif; font-size:.8rem; color:var(--muted);
+  }
+  .spinner{
+    width:26px; height:26px; border-radius:50%;
+    border:3px solid #c7d1cb; border-top-color:var(--pitch);
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .map-controls{
+    position:absolute; top:10px; right:10px;
+    display:flex; flex-direction:column; gap:6px;
+    z-index:3;
+  }
+  .map-controls button{
+    width:34px; height:34px; border-radius:8px; border:none;
+    background:rgba(255,255,255,.92); color:var(--ink);
+    font-size:1.1rem; font-weight:600; cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,.2);
+    font-family:'Work Sans',sans-serif;
+  }
+  .map-controls button:active{background:#fff;}
+  #zoomReset{font-size:.9rem;}
+  .hover-tip{
+    position:absolute; pointer-events:none;
+    background:var(--pitch-dark); color:#fff;
+    font-family:'Work Sans',sans-serif; font-size:.72rem; font-weight:600;
+    padding:4px 8px; border-radius:5px;
+    transform:translate(-50%,-130%);
+    opacity:0; transition:opacity .1s ease;
+    white-space:nowrap; z-index:4;
+  }
+  .hover-tip.show{opacity:1;}
+  .comarca-path{
+    fill:none;
+    stroke:var(--pitch-dark);
+    stroke-width:1.4;
+    stroke-opacity:.35;
+    pointer-events:none;
+    vector-effect:non-scaling-stroke;
+  }
+  .muni-shape{
+    cursor:pointer;
+    stroke:var(--paper);
+    stroke-width:.8;
+    vector-effect:non-scaling-stroke;
+    fill:#c9c19f;
+    transition:fill .12s ease, opacity .12s ease;
+  }
+  .muni-shape:hover{opacity:.82;}
+  .muni-shape.known{fill:var(--terra);}
+  .muni-shape.confirmed{fill:var(--gold);}
+  .muni-shape.selected{
+    fill:var(--pitch) !important;
+    stroke:#fff;
+    stroke-width:2;
+    vector-effect:non-scaling-stroke;
+  }
+  .muni-label{
+    font-family:'Work Sans',sans-serif;
+    font-size:8.5px;
+    font-weight:600;
+    fill:var(--ink);
+    pointer-events:none;
+    text-anchor:middle;
+    paint-order:stroke;
+    stroke:var(--paper);
+    stroke-width:2.2px;
+  }
+
+  .legend{
+    display:flex; gap:14px; flex-wrap:wrap;
+    padding:10px 20px;
+    font-size:.7rem;
+    color:var(--muted);
+    background:var(--paper);
+  }
+  .legend span{display:inline-flex; align-items:center; gap:5px;}
+  .legend i{width:9px;height:9px;border-radius:50%; display:inline-block;}
+
+  section{padding:16px 20px;}
+  .section-title{
+    font-size:.72rem; font-weight:600; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.09em; margin:0 0 10px;
+  }
+
+  .search-row{display:flex; gap:8px; margin-bottom:12px;}
+  .search-row input{
+    flex:1; padding:10px 12px; border:1px solid #d8d2c0; border-radius:7px;
+    font-family:'Work Sans',sans-serif; font-size:.9rem; background:#fff;
+  }
+  .muni-grid{display:none; flex-wrap:wrap; gap:7px; margin-top:4px;}
+  .muni-chip{
+    border:1px solid #d8d2c0; background:#fff; color:var(--ink);
+    padding:7px 12px; border-radius:20px; font-size:.8rem;
+    font-family:'Work Sans',sans-serif; font-weight:500; cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+  }
+  .muni-chip .dot{width:6px;height:6px;border-radius:50%; background:var(--terra); flex:none;}
+  .muni-chip.none .dot{background:#cfc8b4;}
+  .muni-chip.confirmed .dot{background:var(--gold);}
+  .muni-chip.active{background:var(--pitch); border-color:var(--pitch); color:#fff;}
+  .muni-chip.active .dot{background:var(--gold);}
+
+  #team-section{}
+  .team-card{
+    background:var(--card); border:1px solid #e6e0cf; border-left:4px solid var(--terra);
+    border-radius:10px; padding:14px 16px; margin-bottom:10px;
+    display:flex; align-items:center; gap:14px;
+    opacity:0; transform:translateY(10px) scale(.96);
+    animation:cardPop .42s cubic-bezier(.2,.8,.3,1.2) forwards;
+    box-shadow:0 1px 2px rgba(28,35,31,.04);
+  }
+  @keyframes cardPop{
+    to{ opacity:1; transform:translateY(0) scale(1); }
+  }
+  .crest{
+    flex:none; width:52px; height:52px;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.18));
+    opacity:0; transform:scale(.4) rotate(-8deg);
+    animation:crestPop .5s cubic-bezier(.34,1.56,.64,1) forwards;
+    animation-delay:.12s;
+  }
+  .crest svg{display:block; width:100%; height:100%;}
+  @keyframes crestPop{
+    to{ opacity:1; transform:scale(1) rotate(0deg); }
+  }
+  .team-card .info{flex:1; min-width:0;}
+  .team-card h3{margin:0 0 4px; font-size:1.02rem; font-weight:600; color:var(--ink);}
+  .team-card .cat{font-size:.8rem; color:var(--muted); font-weight:500;}
+  .team-card.confirmed{border-left-color:var(--gold);}
+  .team-card.confirmed .cat{color:#8a6a10;}
+  .team-header{
+    display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+    margin-bottom:12px;
+  }
+  .team-header .count{
+    font-size:.72rem; color:var(--muted); font-weight:600;
+    background:var(--paper-2); padding:3px 9px; border-radius:20px;
+  }
+  .empty-state{
+    background:#fff; border:1px dashed #cfc8b4; border-radius:8px; padding:16px;
+    font-size:.86rem; color:var(--muted); line-height:1.5;
+  }
+  .empty-state a{color:var(--terra);}
+
+  footer{
+    padding:18px 20px 8px; font-size:.73rem; color:var(--muted); line-height:1.55;
+    border-top:1px solid #e6e0cf; margin-top:6px;
+  }
+  footer a{color:var(--terra);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>Futbol d'11 a la demarcació de Tarragona</h1>
+    <p>Mapa continu de tota la demarcació. Arrossega per moure't, fes pinça o roda per fer zoom, i toca qualsevol municipi.</p>
+  </header>
+
+  <div class="crumbs" id="crumbs">
+    <span id="crumbText">Explora el mapa — arrossega i fes zoom</span>
+  </div>
+
+  <div class="map-holder" id="mapHolder">
+    <div id="loadingState" class="loading-state">
+      <div class="spinner"></div>
+      <span>Carregant dades des de Supabase…</span>
+    </div>
+    <svg id="map" viewBox="0 0 800 755" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="map-controls">
+      <button id="zoomIn" aria-label="Apropar">+</button>
+      <button id="zoomOut" aria-label="Allunyar">−</button>
+      <button id="zoomReset" aria-label="Vista general">⤢</button>
+    </div>
+    <div class="hover-tip" id="hoverTip"></div>
+  </div>
+
+  <div class="legend">
+    <span><i style="background:var(--gold)"></i>categoria confirmada</span>
+    <span><i style="background:var(--terra)"></i>club conegut</span>
+    <span><i style="background:#c9c19f"></i>sense dades</span>
+  </div>
+
+  <section id="search-section">
+    <div class="search-row">
+      <input type="text" id="muniSearch" placeholder="Cerca un municipi per anar-hi directament…" autocomplete="off">
+    </div>
+    <div class="muni-grid" id="muniGrid"></div>
+  </section>
+
+  <section id="team-section">
+    <p class="section-title" id="teamTitle">Equips</p>
+    <div id="teamCards">
+      <div class="empty-state">Toca qualsevol municipi del mapa (o cerca'l a sobre) per veure els seus clubs de futbol d'11.</div>
+    </div>
+  </section>
+
+  <footer>
+    Dades servides en directe des de Supabase (Postgres). <strong>Reus</strong> ja mostra dades verificades de la temporada <strong>2026-27</strong> (BeSoccer), sense filials. La resta de municipis encara mostren la darrera dada verificada disponible (majoritàriament 2024-25). Els clubs en <strong>daurat</strong> tenen la categoria confirmada; la resta són clubs coneguts amb categoria pendent de confirmar. Els escuts són generats (inicials del club) — no són els logotips oficials.
+  </footer>
+
+</div>
+
+<script>
+const SUPABASE_URL = 'https://moupqlmazliymazcxgih.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdXBxbG1hemxpeW1hemN4Z2loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2NDA3MDcsImV4cCI6MjEwNTIxNjcwN30.ZDM6zDKIcvc_STDyT_8IDozQT2ooLuZMp8vyIFLe9f8';
+const VIEW_BOX = '0 0 800.0 754.9'; // sistema de coordenades fix amb què es van generar totes les geometries
+
+const MAP = { comarcaPaths:{}, viewBox: VIEW_BOX };
+const TEAMS = {};
+const MUNI = { paths:{}, bbox:{} };
+
+const svg = document.getElementById('map');
+const mapHolder = document.getElementById('mapHolder');
+const crumbText = document.getElementById('crumbText');
+const teamSection = document.getElementById('team-section');
+const muniGrid = document.getElementById('muniGrid');
+const teamTitle = document.getElementById('teamTitle');
+const teamCards = document.getElementById('teamCards');
+const muniSearch = document.getElementById('muniSearch');
+const hoverTip = document.getElementById('hoverTip');
+
+let currentMuni = null;
+
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs){
+  const e = document.createElementNS(NS, tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function teamStatus(nom){
+  const teams = TEAMS[nom] || [];
+  if(teams.length===0) return 'none';
+  if(teams.some(t=>t.confirmed)) return 'confirmed';
+  return 'known';
+}
+
+// ---------- full-province view state (pan & zoom via viewBox) ----------
+const FULL = MAP.viewBox.split(' ').map(Number); // [x,y,w,h]
+const FULL_BOX = {x:FULL[0], y:FULL[1], w:FULL[2], h:FULL[3]};
+const view = {x:FULL_BOX.x, y:FULL_BOX.y, w:FULL_BOX.w, h:FULL_BOX.h};
+const MIN_W = FULL_BOX.w * 0.035; // deepest zoom
+const MAX_W = FULL_BOX.w;         // full extent
+
+function clampView(){
+  view.w = Math.min(Math.max(view.w, MIN_W), MAX_W);
+  view.h = view.w * (FULL_BOX.h/FULL_BOX.w);
+  const margin = view.w * 0.6;
+  const minX = FULL_BOX.x - margin, maxX = FULL_BOX.x + FULL_BOX.w + margin - view.w;
+  const minY = FULL_BOX.y - margin, maxY = FULL_BOX.y + FULL_BOX.h + margin - view.h;
+  view.x = Math.min(Math.max(view.x, minX), Math.max(minX,maxX));
+  view.y = Math.min(Math.max(view.y, minY), Math.max(minY,maxY));
+}
+function applyView(){
+  svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
+}
+
+function svgPoint(clientX, clientY){
+  const rect = svg.getBoundingClientRect();
+  const mx = (clientX-rect.left)/rect.width;
+  const my = (clientY-rect.top)/rect.height;
+  return {x: view.x + mx*view.w, y: view.y + my*view.h, mx, my};
+}
+
+function zoomAt(factor, clientX, clientY){
+  const rect = svg.getBoundingClientRect();
+  const mx = clientX!=null ? (clientX-rect.left)/rect.width : 0.5;
+  const my = clientY!=null ? (clientY-rect.top)/rect.height : 0.5;
+  const px = view.x + mx*view.w, py = view.y + my*view.h;
+  view.w *= factor;
+  clampView();
+  view.x = px - mx*view.w;
+  view.y = py - my*view.h;
+  clampView();
+  applyView();
+}
+
+function animateTo(target, duration){
+  const start = {x:view.x, y:view.y, w:view.w};
+  const t0 = performance.now();
+  function step(now){
+    let t = Math.min(1, (now-t0)/duration);
+    const e = 1 - Math.pow(1-t, 3); // ease-out cubic
+    view.w = start.w + (target.w-start.w)*e;
+    view.h = view.w * (FULL_BOX.h/FULL_BOX.w);
+    view.x = start.x + (target.x-start.x)*e;
+    view.y = start.y + (target.y-start.y)*e;
+    applyView();
+    if(t<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function zoomToMuniName(name){
+  const b = MUNI.bbox[name];
+  if(!b) return;
+  const bw = b[2]-b[0], bh = b[3]-b[1];
+  const targetW = Math.max(bw,bh/(FULL_BOX.h/FULL_BOX.w)) * 3.2 + MIN_W*0.4;
+  const cx = (b[0]+b[2])/2, cy=(b[1]+b[3])/2;
+  const w = Math.min(Math.max(targetW, MIN_W), MAX_W);
+  const h = w * (FULL_BOX.h/FULL_BOX.w);
+  animateTo({x:cx-w/2, y:cy-h/2, w}, 550);
+}
+
+// ---------- build map once ----------
+function buildMap(){
+  svg.innerHTML='';
+  const g = el('g',{class:'mapgroup'});
+  const munis = Object.keys(MUNI.paths);
+  munis.forEach(name=>{
+    const status = teamStatus(name);
+    const shape = el('path',{d:MUNI.paths[name].d, class:'muni-shape '+status, 'data-nom':name});
+    shape.addEventListener('pointerenter', ()=>showTip(name));
+    shape.addEventListener('pointerleave', hideTip);
+    shape.addEventListener('click', (e)=>{ if(!wasDrag) onMuniTap(name); });
+    g.appendChild(shape);
+  });
+  Object.keys(MAP.comarcaPaths).forEach(name=>{
+    g.appendChild(el('path',{d:MAP.comarcaPaths[name], class:'comarca-path'}));
+  });
+  svg.appendChild(g);
+  applyView();
+}
+
+function showTip(name){
+  hoverTip.textContent = name;
+  hoverTip.classList.add('show');
+}
+function hideTip(){ hoverTip.classList.remove('show'); }
+mapHolder.addEventListener('pointermove', (e)=>{
+  if(!hoverTip.classList.contains('show')) return;
+  const rect = mapHolder.getBoundingClientRect();
+  hoverTip.style.left = (e.clientX-rect.left)+'px';
+  hoverTip.style.top = (e.clientY-rect.top)+'px';
+});
+
+function onMuniTap(name){
+  selectMuni(name);
+  zoomToMuniName(name);
+}
+
+// ---------- pan (drag) + pinch zoom ----------
+let dragging=false, wasDrag=false, lastX=0, lastY=0;
+let pinchStartDist=0, pinchStartW=0;
+const pointers = new Map();
+
+// NOTE: we deliberately do NOT use setPointerCapture here — capturing the
+// pointer on mapHolder retargets click events to mapHolder too, so the
+// per-shape click listeners on municipis never fire. Instead we track the
+// drag via window-level listeners, added only while a pointer is down.
+
+function onPointerMove(e){
+  if(!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, {x:e.clientX,y:e.clientY});
+  if(pointers.size===2){
+    const pts=[...pointers.values()];
+    const dist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
+    const midX=(pts[0].x+pts[1].x)/2, midY=(pts[0].y+pts[1].y)/2;
+    if(pinchStartDist>0){
+      const factor = pinchStartDist/Math.max(dist,1);
+      const rect = svg.getBoundingClientRect();
+      const mx=(midX-rect.left)/rect.width, my=(midY-rect.top)/rect.height;
+      const px = view.x+mx*view.w, py = view.y+my*view.h;
+      view.w = pinchStartW*factor;
+      clampView();
+      view.x = px-mx*view.w; view.y = py-my*view.h;
+      clampView(); applyView();
+      wasDrag=true;
+    }
+  } else if(dragging){
+    const dx = e.clientX-lastX, dy=e.clientY-lastY;
+    if(Math.abs(dx)>2||Math.abs(dy)>2) wasDrag=true;
+    const rect = svg.getBoundingClientRect();
+    view.x -= dx*(view.w/rect.width);
+    view.y -= dy*(view.h/rect.height);
+    clampView(); applyView();
+    lastX=e.clientX; lastY=e.clientY;
+  }
+}
+function onPointerUp(e){
+  pointers.delete(e.pointerId);
+  dragging = pointers.size===1;
+  if(pointers.size<2) pinchStartDist=0;
+  mapHolder.classList.remove('dragging');
+  if(pointers.size===0){
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
+  }
+}
+mapHolder.addEventListener('pointerdown', (e)=>{
+  pointers.set(e.pointerId, {x:e.clientX,y:e.clientY});
+  wasDrag=false;
+  if(pointers.size===1){
+    dragging=true; lastX=e.clientX; lastY=e.clientY;
+    mapHolder.classList.add('dragging');
+  } else if(pointers.size===2){
+    dragging=false;
+    const pts=[...pointers.values()];
+    pinchStartDist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
+    pinchStartW = view.w;
+  }
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerUp);
+});
+mapHolder.addEventListener('wheel', (e)=>{
+  e.preventDefault();
+  const factor = e.deltaY<0 ? 0.88 : 1.14;
+  zoomAt(factor, e.clientX, e.clientY);
+}, {passive:false});
+
+document.getElementById('zoomIn').addEventListener('click', ()=>zoomAt(0.75));
+document.getElementById('zoomOut').addEventListener('click', ()=>zoomAt(1.33));
+document.getElementById('zoomReset').addEventListener('click', ()=>{
+  animateTo({x:FULL_BOX.x, y:FULL_BOX.y, w:FULL_BOX.w}, 450);
+  crumbText.textContent = 'Explora el mapa — arrossega i fes zoom';
+});
+
+// ---------- search ----------
+function renderSearchResults(filter){
+  muniGrid.innerHTML='';
+  if(!filter){ muniGrid.style.display='none'; return; }
+  const f = filter.toLowerCase();
+  const matches = Object.keys(MUNI.paths)
+    .filter(n=>n.toLowerCase().includes(f))
+    .sort((a,b)=>a.localeCompare(b,'ca'))
+    .slice(0,18);
+  muniGrid.style.display = matches.length ? 'flex' : 'none';
+  matches.forEach(name=>{
+    const status = teamStatus(name);
+    const chip = document.createElement('button');
+    chip.className = 'muni-chip ' + status;
+    chip.innerHTML = `<span class="dot"></span>${name}`;
+    chip.addEventListener('click', ()=>{
+      muniSearch.value = name;
+      muniGrid.style.display='none';
+      onMuniTap(name);
+    });
+    muniGrid.appendChild(chip);
+  });
+}
+muniSearch.addEventListener('input', (e)=>renderSearchResults(e.target.value));
+
+function selectMuni(muniName){
+  currentMuni = muniName;
+  document.querySelectorAll('.muni-shape').forEach(d=>d.classList.remove('selected'));
+  const shape = [...document.querySelectorAll('.muni-shape')].find(d=>d.getAttribute('data-nom')===muniName);
+  if(shape){ shape.classList.add('selected'); shape.parentNode.appendChild(shape); }
+
+  const info = MUNI.paths[muniName];
+  crumbText.textContent = `${muniName} · ${info.comarca}`;
+
+  teamTitle.textContent = muniName;
+  const teams = TEAMS[muniName] || [];
+  teamCards.innerHTML='';
+  if(teams.length===0){
+    const div = document.createElement('div');
+    div.className='empty-state';
+    div.innerHTML = `No tenim cap club identificat per a <strong>${muniName}</strong> en aquesta base de dades. Molts municipis petits sí que tenen un equip de futbol base o de 4a catalana — consulta <a href="https://www.fcf.cat" target="_blank" rel="noopener">fcf.cat</a> o <a href="https://www.besoccer.com" target="_blank" rel="noopener">besoccer.com</a>, o demana'm que ho investigui.`;
+    teamCards.appendChild(div);
+  } else {
+    const header = document.createElement('div');
+    header.className='team-header';
+    header.innerHTML = `<span></span><span class="count">${teams.length} club${teams.length>1?'s':''} (sense filials)</span>`;
+    teamCards.appendChild(header);
+    teams.forEach((t,i)=>{
+      const card = document.createElement('div');
+      card.className = 'team-card' + (t.confirmed ? ' confirmed':'');
+      card.style.animationDelay = (i*0.07)+'s';
+      const crestWrap = document.createElement('div');
+      crestWrap.className='crest';
+      crestWrap.style.animationDelay = (0.12 + i*0.07)+'s';
+      crestWrap.innerHTML = makeCrestSVG(t.name);
+      const infoDiv = document.createElement('div');
+      infoDiv.className='info';
+      infoDiv.innerHTML = `<h3>${t.name}</h3><div class="cat">${t.cat}</div>`;
+      card.appendChild(crestWrap);
+      card.appendChild(infoDiv);
+      teamCards.appendChild(card);
+    });
+  }
+  teamSection.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function hashNum(str){
+  let h=0;
+  for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) | 0; }
+  return Math.abs(h);
+}
+
+const STOPWORDS = new Set(['CF','CD','CE','UE','UD','SD','AE','SCER','CDC','FC','JD','B','A','Club','Futbol','Esportiu','Esportiva','Unió','Atlètic','Atletic','Base','de','del','la','les','el','els','i','At.']);
+function initialsFor(name){
+  const words = name.replace(/["“”]/g,'').split(/\s+/).filter(w=>w && !STOPWORDS.has(w));
+  const src = words.length ? words : name.split(/\s+/);
+  let letters = src.slice(0,2).map(w=>w[0].toUpperCase());
+  if(letters.length<2 && src[0] && src[0].length>1) letters = [src[0][0].toUpperCase(), src[0][1].toUpperCase()];
+  return letters.join('').slice(0,3) || '??';
+}
+
+function makeCrestSVG(name){
+  const h = hashNum(name);
+  const hue = h % 360;
+  const hue2 = (hue + 32) % 360;
+  const c1 = `hsl(${hue} 55% 28%)`;
+  const c2 = `hsl(${hue2} 60% 42%)`;
+  const gid = 'g' + h;
+  const initials = initialsFor(name);
+  return `<svg viewBox="0 0 100 120" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="${c1}"/>
+        <stop offset="1" stop-color="${c2}"/>
+      </linearGradient>
+    </defs>
+    <path d="M50,4 L92,19 L92,58 Q92,100 50,116 Q8,100 8,58 L8,19 Z" fill="url(#${gid})" stroke="#fff" stroke-width="3"/>
+    <path d="M50,4 L92,19 L92,58 Q92,100 50,116 Q8,100 8,58 L8,19 Z" fill="none" stroke="rgba(0,0,0,.15)" stroke-width="1"/>
+    <text x="50" y="68" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="600" font-size="40" fill="#fff" style="paint-order:stroke; stroke:rgba(0,0,0,.25); stroke-width:1px;">${initials}</text>
+  </svg>`;
+}
+
+async function loadAndInit(){
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  try{
+    const [comarquesRes, rowsRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/comarques?select=nom,path_svg`, {headers}),
+      fetch(`${SUPABASE_URL}/rest/v1/v_municipis_clubs?select=*`, {headers})
+    ]);
+    if(!comarquesRes.ok || !rowsRes.ok) throw new Error('HTTP ' + comarquesRes.status + '/' + rowsRes.status);
+    const comarques = await comarquesRes.json();
+    const rows = await rowsRes.json();
+
+    comarques.forEach(c=>{ MAP.comarcaPaths[c.nom] = c.path_svg; });
+
+    rows.forEach(r=>{
+      if(!MUNI.paths[r.municipi]){
+        MUNI.paths[r.municipi] = {comarca:r.comarca, d:r.municipi_path};
+        MUNI.bbox[r.municipi] = [Number(r.bbox_x0), Number(r.bbox_y0), Number(r.bbox_x1), Number(r.bbox_y1)];
+      }
+      if(r.club_id){
+        (TEAMS[r.municipi] = TEAMS[r.municipi] || []).push({
+          name: r.club_nom, cat: r.categoria, confirmed: !!r.confirmat
+        });
+      }
+    });
+
+    hideLoading();
+    buildMap();
+  }catch(err){
+    showError(err);
+  }
+}
+
+function hideLoading(){
+  const el = document.getElementById('loadingState');
+  if(el) el.remove();
+}
+function showError(err){
+  const holder = document.getElementById('mapHolder');
+  holder.innerHTML = `<div style="padding:24px;font-family:'Work Sans',sans-serif;font-size:.85rem;color:#8a3a1f;">
+    No s'han pogut carregar les dades des de Supabase.<br><br>
+    <code style="font-size:.75rem;opacity:.8;">${(err && err.message) || err}</code><br><br>
+    Comprova que el projecte de Supabase estigui actiu i que schema.sql + seed.sql s'hagin executat correctament.
+  </div>`;
+  console.error(err);
+}
+
+loadAndInit();
+</script>
+</body>
+</html>
