@@ -546,7 +546,16 @@ function selectMuni(muniName){
       const crestWrap = document.createElement('div');
       crestWrap.className='crest';
       crestWrap.style.animationDelay = (0.12 + i*0.07)+'s';
-      crestWrap.innerHTML = makeCrestSVG(t.name);
+      if(t.crest_url){
+        const img = document.createElement('img');
+        img.src = t.crest_url;
+        img.alt = t.name;
+        img.style.cssText = 'width:100%;height:100%;object-fit:contain;';
+        img.onerror = () => { crestWrap.innerHTML = makeCrestSVG(t.name); };
+        crestWrap.appendChild(img);
+      } else {
+        crestWrap.innerHTML = makeCrestSVG(t.name);
+      }
       const infoDiv = document.createElement('div');
       infoDiv.className='info';
       infoDiv.innerHTML = `<h3>${t.name}</h3><div class="cat">${t.cat}</div>`;
@@ -617,7 +626,7 @@ async function loadAndInit(){
       }
       if(r.club_id){
         (TEAMS[r.municipi] = TEAMS[r.municipi] || []).push({
-          name: r.club_nom, cat: r.categoria, confirmed: !!r.confirmat
+          name: r.club_nom, cat: r.categoria, confirmed: !!r.confirmat, crest_url: r.crest_url || null
         });
       }
     });
