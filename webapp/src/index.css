@@ -221,6 +221,20 @@ button {
   pointer-events: none;
 }
 
+.camp-pin-halo {
+  fill: rgba(232, 199, 102, 0.28);
+}
+
+.camp-pin-dot {
+  fill: #e8c766;
+  stroke: #07120d;
+  stroke-width: 0.3;
+}
+
+.camp-pin {
+  cursor: default;
+}
+
 /* ---------- map controls ---------- */
 
 .map-controls {
@@ -433,6 +447,12 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.club-camp {
+  margin: 2px 0 0;
+  font-size: 0.68rem;
+  color: #6f8277;
 }
 
 .pending-dot {

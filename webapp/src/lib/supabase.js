@@ -47,6 +47,22 @@ export function colorForCategory(categoria) {
   return key ? CATEGORY_COLORS[key] : '#6b7b6f'
 }
 
+// Groups clubs that share the same field into one pin (e.g. two clubs that
+// both play at the same camp). Clubs without known camp coordinates are
+// left out — the panel's flat list still shows them.
+function buildCamps(clubs) {
+  const byCamp = new Map()
+  clubs.forEach((c) => {
+    if (c.campX == null || c.campY == null) return
+    const key = c.campNom || `${c.campX},${c.campY}`
+    if (!byCamp.has(key)) {
+      byCamp.set(key, { nom: c.campNom, x: c.campX, y: c.campY, clubs: [] })
+    }
+    byCamp.get(key).clubs.push(c)
+  })
+  return [...byCamp.values()]
+}
+
 export async function fetchMapData() {
   const [comarquesRes, rowsRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/comarques?select=nom,path_svg`, { headers }),
@@ -88,6 +104,9 @@ export async function fetchMapData() {
         categoria: r.categoria,
         confirmat: r.confirmat,
         crestUrl: r.crest_url,
+        campNom: r.camp_nom ?? null,
+        campX: r.camp_x ?? null,
+        campY: r.camp_y ?? null,
       })
     }
   })
@@ -95,6 +114,7 @@ export async function fetchMapData() {
   Object.values(municipis).forEach((m) => {
     m.clubs.sort((a, b) => categoryRank(a.categoria) - categoryRank(b.categoria))
     m.topRank = m.clubs.length ? categoryRank(m.clubs[0].categoria) : null
+    m.camps = buildCamps(m.clubs)
   })
 
   return { comarcaPaths, municipis: Object.values(municipis) }

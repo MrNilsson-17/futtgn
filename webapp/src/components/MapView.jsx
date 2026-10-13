@@ -270,6 +270,25 @@ const MapView = forwardRef(function MapView({ comarcaPaths, municipis, selected,
             const r = Math.max(m.bbox.x1 - m.bbox.x0, m.bbox.y1 - m.bbox.y0) * 1.8
             return <circle cx={cx} cy={cy} r={r} fill="url(#glow)" className="selection-glow" />
           })()}
+
+        {selected &&
+          (() => {
+            const m = municipis.find((mu) => mu.nom === selected)
+            if (!m || !m.camps.length) return null
+            return (
+              <g className="camp-pins">
+                {m.camps.map((camp, i) => (
+                  <g key={i} className="camp-pin" transform={`translate(${camp.x} ${camp.y})`}>
+                    <circle r="2.4" className="camp-pin-halo" />
+                    <circle r="1.1" className="camp-pin-dot" />
+                    <title>
+                      {(camp.nom ? camp.nom + ' — ' : '') + camp.clubs.map((c) => c.nom).join(' i ')}
+                    </title>
+                  </g>
+                ))}
+              </g>
+            )
+          })()}
       </svg>
     </div>
   )

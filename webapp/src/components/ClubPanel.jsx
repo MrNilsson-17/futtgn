@@ -48,6 +48,7 @@ function ClubRow({ club, delay }) {
           {club.categoria || 'Categoria pendent de confirmar'}
           {!club.confirmat && <span className="pending-dot" title="Pendent de confirmar" />}
         </p>
+        {club.campNom && <p className="club-camp">{club.campNom}</p>}
       </div>
     </motion.li>
   )
