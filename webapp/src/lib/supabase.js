@@ -31,14 +31,14 @@ export function categoryRank(categoria) {
 // Tier colors — reused everywhere a category needs a swatch (legend, badges,
 // map tinting). Warmest gold at the top tier, cooling toward the base.
 export const CATEGORY_COLORS = {
-  'Primera Federació': '#e8c766',
-  'Segona Federació': '#d9ad4e',
-  'Tercera Federació': '#c99a2e',
-  'Lliga Elit': '#b0502f',
-  'Primera Catalana': '#8a6fae',
-  'Segona Catalana': '#5f7fae',
-  'Tercera Catalana': '#4f8f7a',
-  'Quarta Catalana': '#6b7b6f',
+  'Primera Federació': '#e8481c',
+  'Segona Federació': '#5f7fae',
+  'Tercera Federació': '#8fd18a',
+  'Lliga Elit': '#f2c230',
+  'Primera Catalana': '#7b2fbf',
+  'Segona Catalana': '#9a63cf',
+  'Tercera Catalana': '#b995dc',
+  'Quarta Catalana': '#d3bfe9',
 }
 
 export function colorForCategory(categoria) {
