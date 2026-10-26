@@ -34,11 +34,11 @@ export const CATEGORY_COLORS = {
   'Primera Federació': '#e8481c',
   'Segona Federació': '#5f7fae',
   'Tercera Federació': '#8fd18a',
-  'Lliga Elit': '#f2c230',
-  'Primera Catalana': '#7b2fbf',
-  'Segona Catalana': '#9a63cf',
-  'Tercera Catalana': '#b995dc',
-  'Quarta Catalana': '#d3bfe9',
+  'Lliga Elit': '#7b2fbf',
+  'Primera Catalana': '#f2b705',
+  'Segona Catalana': '#f6cb3d',
+  'Tercera Catalana': '#f9dc79',
+  'Quarta Catalana': '#fbebb0',
 }
 
 export function colorForCategory(categoria) {
