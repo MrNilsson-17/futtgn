@@ -303,6 +303,28 @@ button {
   display: inline-block;
 }
 
+/* ---------- legal links ---------- */
+
+.legal-links {
+  position: absolute;
+  left: 20px;
+  bottom: 4px;
+  z-index: 15;
+  display: flex;
+  gap: 12px;
+  font-size: 0.64rem;
+}
+
+.legal-links a {
+  color: #8fa397;
+  text-decoration: none;
+}
+
+.legal-links a:hover {
+  color: #e8c766;
+  text-decoration: underline;
+}
+
 /* ---------- status ---------- */
 
 .status-banner {
