@@ -162,8 +162,55 @@ button {
   font-size: 0.85rem;
 }
 
-.search-results button:hover {
+.search-results button:hover,
+.search-results button.is-cursor {
   background: rgba(201, 154, 46, 0.14);
+}
+
+.search-results .res-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.search-results .res-nom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.res-comarca {
+  text-align: right;
+  flex: none;
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.res-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.res-tag {
+  flex: none;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8aa396;
+  border: 1px solid rgba(138, 163, 150, 0.35);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.search-empty {
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  color: #8aa396;
 }
 
 .res-comarca {
