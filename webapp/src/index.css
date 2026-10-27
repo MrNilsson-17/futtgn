@@ -320,6 +320,10 @@ button {
   text-decoration: none;
 }
 
+.legal-links span {
+  color: #6f8277;
+}
+
 .legal-links a:hover {
   color: #e8c766;
   text-decoration: underline;

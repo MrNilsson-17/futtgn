@@ -76,6 +76,7 @@ export default function App() {
         <nav className="legal-links" aria-label="Informació legal">
           <a href="privacitat.html">Privacitat</a>
           <a href="cookies.html">Cookies</a>
+          <span>© 2026 Futbol Tarragona</span>
         </nav>
       </main>
 
