@@ -6,7 +6,7 @@ const norm = (s) =>
   (s || '')
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/\p{M}/gu, '')
     .trim()
 
 // Els resultats que comencen pel que s'ha escrit, primer.
