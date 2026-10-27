@@ -41,6 +41,12 @@ export const CATEGORY_COLORS = {
   'Quarta Catalana': '#fbebb0',
 }
 
+// True when a club's categoria (e.g. 'Segona Federació — Grup 2') belongs to
+// one of the legend categories (e.g. 'Segona Federació').
+export function clubInCategory(club, key) {
+  return !!club.categoria && club.categoria.startsWith(key)
+}
+
 export function colorForCategory(categoria) {
   if (!categoria) return '#6b7b6f'
   const key = Object.keys(CATEGORY_COLORS).find((c) => categoria.startsWith(c))

@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react'
-import { VIEW_BOX, colorForCategory } from '../lib/supabase'
+import { VIEW_BOX, CATEGORY_COLORS, clubInCategory, colorForCategory } from '../lib/supabase'
 
 const FULL = VIEW_BOX.split(' ').map(Number)
 const FULL_BOX = { x: FULL[0], y: FULL[1], w: FULL[2], h: FULL[3] }
@@ -14,7 +14,7 @@ function clampView(v) {
   return v
 }
 
-const MapView = forwardRef(function MapView({ comarcaPaths, municipis, selected, onSelect }, ref) {
+const MapView = forwardRef(function MapView({ comarcaPaths, municipis, selected, onSelect, activeCat }, ref) {
   const svgRef = useRef(null)
   const holderRef = useRef(null)
   const viewRef = useRef({ ...FULL_BOX })
@@ -243,12 +243,24 @@ const MapView = forwardRef(function MapView({ comarcaPaths, municipis, selected,
         {municipis.map((m) => {
           const isSelected = m.nom === selected
           const hasClubs = m.clubs.length > 0
-          const fill = hasClubs ? colorForCategory(m.clubs[0].categoria) : '#1a2c22'
+          // Amb un filtre actiu, un municipi es ressalta si TÉ algun club d'aquesta
+          // categoria (encara que també en tingui d'altres, com Reus), i es pinta
+          // amb el color de la categoria filtrada.
+          const matches = !activeCat || m.clubs.some((c) => clubInCategory(c, activeCat))
+          const fill = activeCat
+            ? matches
+              ? CATEGORY_COLORS[activeCat]
+              : '#1a2c22'
+            : hasClubs
+              ? colorForCategory(m.clubs[0].categoria)
+              : '#1a2c22'
           return (
             <path
               key={m.nom}
               d={m.path}
-              className={`muni-shape${isSelected ? ' is-selected' : ''}${hasClubs ? ' has-clubs' : ''}`}
+              className={`muni-shape${isSelected ? ' is-selected' : ''}${hasClubs ? ' has-clubs' : ''}${
+                activeCat ? (matches ? ' is-match' : ' is-dim') : ''
+              }`}
               style={{ '--muni-fill': fill }}
               onClick={() => handleMuniClick(m.nom)}
             >

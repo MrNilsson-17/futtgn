@@ -217,6 +217,16 @@ button {
   opacity: 0.55;
 }
 
+.muni-shape.is-dim {
+  opacity: 0.22;
+}
+
+.muni-shape.is-match {
+  opacity: 1;
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 0.9;
+}
+
 .comarca-outline {
   fill: none;
   stroke: rgba(176, 80, 47, 0.55);
@@ -292,6 +302,9 @@ button {
 }
 
 .legend-chip {
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -301,6 +314,24 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.06);
   padding: 4px 9px 4px 6px;
   border-radius: 999px;
+}
+
+.legend-chip:hover {
+  background: rgba(30, 58, 42, 0.9);
+}
+
+.legend-chip.is-active {
+  background: rgba(30, 58, 42, 0.95);
+  color: #fff;
+}
+
+.legend-chip.is-muted {
+  opacity: 0.5;
+}
+
+.legend-chip:focus-visible {
+  outline: 2px solid #e8c766;
+  outline-offset: 2px;
 }
 
 .legend-chip i {

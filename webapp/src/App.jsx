@@ -9,6 +9,7 @@ export default function App() {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [selected, setSelected] = useState(null)
+  const [activeCat, setActiveCat] = useState(null)
   const mapRef = useRef(null)
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function App() {
             municipis={data.municipis}
             selected={selected}
             onSelect={setSelected}
+            activeCat={activeCat}
           />
         )}
 
@@ -71,7 +73,12 @@ export default function App() {
           </div>
         )}
 
-        {data && <Legend />}
+        {data && (
+          <Legend
+            active={activeCat}
+            onToggle={(key) => setActiveCat((cur) => (cur === key ? null : key))}
+          />
+        )}
 
         <nav className="legal-links" aria-label="Informació legal">
           <a href="privacitat.html">Privacitat</a>
