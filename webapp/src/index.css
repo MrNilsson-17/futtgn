@@ -83,6 +83,13 @@ button {
   line-height: 1;
 }
 
+.brand-logo {
+  display: block;
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+
 .brand h1 {
   font-size: 1.05rem;
   font-weight: 600;

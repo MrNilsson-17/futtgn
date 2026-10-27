@@ -23,7 +23,7 @@ export default function App() {
     <div className="app-shell">
       <header className="top-bar">
         <div className="brand">
-          <span className="brand-mark">TGN</span>
+          <img className="brand-logo" src="logo.svg" alt="Futbol Tarragona" width="34" height="34" />
           <div>
             <h1>Mapa del futbol tarragoní</h1>
             <p>Clubs de futbol 11, temporada 2026–27</p>
